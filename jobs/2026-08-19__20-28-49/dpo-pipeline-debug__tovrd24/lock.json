@@ -1,0 +1,34 @@
+{
+    "schema_version": 2,
+    "task": {
+        "name": "dpo-pipeline-debug",
+        "type": "local",
+        "digest": "sha256:6f56cbd6a0d845617ff8dec474b2581d7c36ea1a4c36eb19d96a8e295ab10a6f",
+        "path": "."
+    },
+    "install_only": false,
+    "timeout_multiplier": 1.0,
+    "agent": {
+        "name": "oracle",
+        "skills": [],
+        "resume_trajectory": false,
+        "extra_allowed_hosts": [],
+        "kwargs": {},
+        "mcp_servers": []
+    },
+    "skills": [],
+    "environment": {
+        "type": "docker",
+        "force_build": false,
+        "delete": true,
+        "cpu_enforcement_policy": "auto",
+        "memory_enforcement_policy": "auto",
+        "extra_docker_compose": [],
+        "kwargs": {},
+        "extra_allowed_hosts": []
+    },
+    "verifier": {
+        "disable": false,
+        "environment_mode": "separate"
+    }
+}
