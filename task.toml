@@ -7,29 +7,26 @@ stack = ["python", "jsonl"]
 
 [verifier]
 environment_mode = "separate"
-# Verifier runs in a separate environment. To preserve portability across hosts, do not
-# include host-specific bind mounts here. The hidden dataset must be
-# provided to the verifier at runtime by the evaluation host (e.g. via a
-# verifier-only bind mount or environment variable). Do not place the
-# hidden file inside the task repository.
-
 
 [verifier.environment]
 os = "linux"
 
-# Artifacts to collect from the agent container so the verifier can access
-# the agent-produced files (modified source and final output). These are
-# copied from the agent's container path into the trial artifacts and made
-# available to the verifier through the environment's /logs/artifacts mount.
-
-# Declare multiple likely agent locations as best-effort sources so the
-# verifier receives the corrected files regardless of the agent working dir.
-# Harbor will attempt to download each source; missing ones are skipped.
+[[artifacts]]
+source = "/solution/src/dedup.py"
+destination = "solution/src/dedup.py"
 
 [[artifacts]]
 source = "/solution/src/format.py"
 destination = "solution/src/format.py"
 
 [[artifacts]]
+source = "/solution/data/deduped_preferences.jsonl"
+destination = "solution/data/deduped_preferences.jsonl"
+
+[[artifacts]]
 source = "/solution/data/final_preferences.jsonl"
 destination = "solution/data/final_preferences.jsonl"
+
+[[artifacts]]
+source = "/solution/REPORT.md"
+destination = "solution/REPORT.md"

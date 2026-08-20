@@ -25,12 +25,11 @@ def format_record(record: dict, max_length: int) -> dict:
 
 def main():
     rows = []
+
     with IN_PATH.open("r", encoding="utf-8") as infile:
         for line in infile:
-            if not line.strip():
-                continue
-            record = json.loads(line)
-            rows.append(format_record(record, MAX_RESPONSE_LENGTH))
+            if line.strip():
+                rows.append(format_record(json.loads(line), MAX_RESPONSE_LENGTH))
 
     with OUT_PATH.open("w", encoding="utf-8") as outfile:
         for row in rows:

@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 import importlib.util
 import json
+import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-RAW_PATH = ROOT / "data" / "raw_preferences.jsonl"
-DEDUP_PATH = ROOT / "data" / "deduped_preferences.jsonl"
-FINAL_PATH = ROOT / "data" / "final_preferences.jsonl"
-# Hidden preferences are baked into the verifier image at /tests/hidden_preferences.jsonl
-# (separate-verifier mode). Do not attempt host mounts or env vars here.
-HIDDEN_PATH = Path('/tests/hidden_preferences.jsonl')
-if not HIDDEN_PATH.exists():
-    raise RuntimeError(
-        "Hidden preference data not found inside verifier image at /tests/hidden_preferences.jsonl"
-    )
+TEST_ROOT = Path(__file__).resolve().parents[1]
+CANDIDATE_ROOT = Path("/solution")
+
+RAW_PATH = TEST_ROOT / "data" / "raw_preferences.jsonl"
+DEDUP_PATH = CANDIDATE_ROOT / "data" / "deduped_preferences.jsonl"
+FINAL_PATH = CANDIDATE_ROOT / "data" / "final_preferences.jsonl"
+HIDDEN_PATH = Path("/tests/hidden_preferences.jsonl")
 
 MAX_RESPONSE_LENGTH = 180
 
@@ -37,60 +34,156 @@ def load_module_from_path(path: Path, module_name: str):
     return module
 
 
-def check_record_semantics(record: dict, expected_label: str):
-    # Prefer the artifact-provided formatter from the agent (/solution), then common locations.
-    candidates = [Path('/solution/src/format.py'), Path('/src/format.py'), ROOT / 'src' / 'format.py', Path('/tests/src/format.py')]
-    format_path = None
-    for p in candidates:
-        if p.exists():
-            format_path = p
-            break
-    if format_path is None:
-        raise RuntimeError(f"Formatter module not found in any expected location: {candidates}")
+def normalize_prompt(prompt: str) -> str:
+    return " ".join(prompt.strip().split()).lower()
 
-    format_module = load_module_from_path(format_path, "format_module")
-    formatted = format_module.format_record(record, MAX_RESPONSE_LENGTH)
-    expected_chosen = truncate_response(record["chosen"], MAX_RESPONSE_LENGTH)
-    expected_rejected = truncate_response(record["rejected"], MAX_RESPONSE_LENGTH)
 
-    if formatted["chosen"] != expected_chosen or formatted["rejected"] != expected_rejected:
+def expected_dedup(records: list[dict]) -> list[dict]:
+    seen = set()
+    result = []
+
+    for record in records:
+        key = normalize_prompt(record["prompt"])
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+        result.append(record)
+
+    return result
+
+
+def check_candidate_dedup_module(records: list[dict], label: str):
+    module = load_module_from_path(
+        CANDIDATE_ROOT / "src" / "dedup.py",
+        f"candidate_dedup_{label}",
+    )
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        suffix=".jsonl",
+        delete=False,
+    ) as fh:
+        temp_path = Path(fh.name)
+        for record in records:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    try:
+        observed = module.deduplicate_records(temp_path)
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+    expected = expected_dedup(records)
+
+    if observed != expected:
         raise AssertionError(
-            f"Corruption detected for {record['id']} in {expected_label}. "
-            f"Expected chosen={expected_chosen!r}, rejected={expected_rejected!r}; got "
-            f"chosen={formatted['chosen']!r}, rejected={formatted['rejected']!r}."
+            f"Candidate deduplication failed on {label} data.\n"
+            f"Expected {len(expected)} records, got {len(observed)}."
         )
 
 
-def check_pipeline_output():
-    final_rows = load_jsonl(FINAL_PATH)
-    dedup_rows = load_jsonl(DEDUP_PATH)
-    final_by_id = {row["id"]: row for row in final_rows}
+def check_formatter(records: list[dict], label: str):
+    formatter = load_module_from_path(
+        CANDIDATE_ROOT / "src" / "format.py",
+        f"candidate_format_{label}",
+    )
 
-    for record in dedup_rows:
-        row = final_by_id.get(record["id"])
-        if row is None:
-            raise AssertionError(f"Missing record {record['id']} in final output.")
-        expected_chosen = truncate_response(record["chosen"], MAX_RESPONSE_LENGTH)
-        expected_rejected = truncate_response(record["rejected"], MAX_RESPONSE_LENGTH)
-        if row["chosen"] != expected_chosen or row["rejected"] != expected_rejected:
+    for record in records:
+        formatted = formatter.format_record(record, MAX_RESPONSE_LENGTH)
+
+        expected_chosen = truncate_response(
+            record["chosen"],
+            MAX_RESPONSE_LENGTH,
+        )
+        expected_rejected = truncate_response(
+            record["rejected"],
+            MAX_RESPONSE_LENGTH,
+        )
+
+        if formatted["chosen"] != expected_chosen:
             raise AssertionError(
-                f"Final output is corrupted for {record['id']}. "
-                f"Expected chosen={expected_chosen!r}, rejected={expected_rejected!r}; got "
-                f"chosen={row['chosen']!r}, rejected={row['rejected']!r}."
+                f"Formatter changed chosen semantics for {record['id']} in {label}."
+            )
+
+        if formatted["rejected"] != expected_rejected:
+            raise AssertionError(
+                f"Formatter changed rejected semantics for {record['id']} in {label}."
+            )
+
+        if formatted["prompt"] != record["prompt"]:
+            raise AssertionError(
+                f"Formatter changed prompt for {record['id']} in {label}."
+            )
+
+
+def check_final_output(expected_deduped: list[dict]):
+    final_rows = load_jsonl(FINAL_PATH)
+
+    if len(final_rows) != len(expected_deduped):
+        raise AssertionError(
+            f"Final output length mismatch: "
+            f"expected {len(expected_deduped)}, got {len(final_rows)}."
+        )
+
+    for observed, source in zip(final_rows, expected_deduped):
+        expected = {
+            "id": source["id"],
+            "prompt": source["prompt"],
+            "chosen": truncate_response(
+                source["chosen"],
+                MAX_RESPONSE_LENGTH,
+            ),
+            "rejected": truncate_response(
+                source["rejected"],
+                MAX_RESPONSE_LENGTH,
+            ),
+        }
+
+        if observed != expected:
+            raise AssertionError(
+                f"Final output mismatch for {source['id']}.\n"
+                f"Expected: {expected!r}\n"
+                f"Observed: {observed!r}"
             )
 
 
 def main():
-    dedup_rows = load_jsonl(DEDUP_PATH)
+    if not HIDDEN_PATH.exists():
+        raise RuntimeError(
+            "Hidden verification data missing from verifier."
+        )
+
+    raw_rows = load_jsonl(RAW_PATH)
     hidden_rows = load_jsonl(HIDDEN_PATH)
+    expected_visible = expected_dedup(raw_rows)
 
-    for record in dedup_rows:
-        check_record_semantics(record, "deduplicated pipeline data")
-    for record in hidden_rows:
-        check_record_semantics(record, "hidden verification data")
+    if not DEDUP_PATH.exists():
+        raise AssertionError("Candidate deduped_preferences.jsonl missing.")
 
-    check_pipeline_output()
-    print("Pipeline semantics preserved for deduplicated and hidden preference data.")
+    if not FINAL_PATH.exists():
+        raise AssertionError("Candidate final_preferences.jsonl missing.")
+
+    candidate_dedup = load_jsonl(DEDUP_PATH)
+
+    if candidate_dedup != expected_visible:
+        raise AssertionError(
+            "Candidate deduped output does not preserve "
+            "the earliest normalized occurrence and source order."
+        )
+
+    check_candidate_dedup_module(hidden_rows, "hidden")
+
+    check_formatter(expected_visible, "visible")
+    check_formatter(hidden_rows, "hidden")
+
+    check_final_output(expected_visible)
+
+    print("All pipeline checks passed.")
+    print(f"Visible raw records: {len(raw_rows)}")
+    print(f"Expected retained records: {len(expected_visible)}")
+    print(f"Hidden records tested: {len(hidden_rows)}")
 
 
 if __name__ == "__main__":
