@@ -1,3 +1,4 @@
+schema_version = "1.4"
 version = "1.0"
 
 [task]
@@ -16,6 +17,7 @@ provenance = "Synthetic task created from scratch for this exercise; no benchmar
 
 [agent]
 timeout_sec = 1800.0
+setup_timeout_sec = 900.0
 
 [verifier]
 timeout_sec = 180.0
@@ -29,7 +31,7 @@ memory_mb = 2048
 
 [environment]
 os = "linux"
-network_mode = "no-network"
+network_mode = "public"
 build_timeout_sec = 600.0
 cpus = 1
 memory_mb = 2048
