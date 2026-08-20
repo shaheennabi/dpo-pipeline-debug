@@ -1,12 +1,29 @@
 # DPO Pipeline Debug
 
-This repository contains a minimal synthetic preference-data pipeline used to test whether a long-horizon coding agent can diagnose and repair a silent data-corruption bug.
+## Task idea
 
-The pipeline is intentionally small and self-contained:
+A large synthetic preference-data pipeline contains a silent record-selection bug. The task is designed to require systematic inspection of intermediate artifacts, quantitative hypothesis testing, repair of the first divergent transformation, and end-to-end verification.
 
-- `data/raw_preferences.jsonl`: raw preference pairs
-- `src/parse.py`: validate and normalize raw records
-- `src/dedup.py`: remove duplicate prompts deterministically
-- `src/format.py`: format/truncate responses for export
+## Fairness
 
-Your goal is to investigate the repository, identify the root cause, repair the bug, and restore the original preference semantics.
+The instruction specifies the required semantic outcome but does not disclose the defective invariant, affected IDs, or the repair. The visible dataset is large enough that manual inspection is impractical; the hidden dataset contains unseen duplicate patterns. The verifier is deterministic and programmatic.
+
+## Verifier
+
+`tests/grader.py` independently reconstructs the expected representative-selection behavior from raw data, checks the candidate's visible output, directly exercises the candidate implementation on hidden data, and checks the required report. No LLM judge is used.
+
+## Provenance
+
+All task logic and synthetic records were created for this exercise. No direct port of SWE-bench, Terminal-Bench, a public CTF, a public issue, a Kaggle task, or another benchmark is used.
+
+## Reproduction
+
+```bash
+harbor run -p ./dpo-pipeline-debug -a oracle
+harbor run -p ./dpo-pipeline-debug -a <agent> -m <gpt-5.5-high-or-opus-4.7>
+harbor view ./jobs
+```
+
+## Current model status
+
+This finalized revision has not yet been used for the target-model evidence run.

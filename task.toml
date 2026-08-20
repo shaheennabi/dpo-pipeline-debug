@@ -1,15 +1,47 @@
-name = "dpo-pipeline-debug"
-description = "Diagnose and repair a silent preference corruption bug in a synthetic DPO pipeline."
+version = "1.0"
+
+[task]
+name = "collinear-candidate/dpo-pipeline-debug"
+version = "1.0"
+description = "Diagnose and repair silent preference-data corruption in a large synthetic processing pipeline."
+authors = [{ name = "Candidate" }]
+keywords = ["data-processing", "debugging", "python", "jsonl", "long-horizon"]
 
 [metadata]
-category = "benchmark"
-stack = ["python", "jsonl"]
+difficulty = "hard"
+difficulty_explanation = "Requires systematic analysis of a 2500-record multi-stage preference pipeline, cross-stage invariant tracking, root-cause debugging, and hidden-data verification."
+category = "data-processing"
+tags = ["debugging", "data-forensics", "pipeline", "verification"]
+provenance = "Synthetic task created from scratch for this exercise; no benchmark task, public issue, CTF, or public coding challenge was ported."
+
+[agent]
+timeout_sec = 1800.0
 
 [verifier]
+timeout_sec = 180.0
 environment_mode = "separate"
 
 [verifier.environment]
 os = "linux"
+network_mode = "no-network"
+cpus = 1
+memory_mb = 2048
+
+[environment]
+os = "linux"
+network_mode = "no-network"
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+
+[[artifacts]]
+source = "/solution/src/parse.py"
+destination = "solution/src/parse.py"
+
+[[artifacts]]
+source = "/solution/src/normalize.py"
+destination = "solution/src/normalize.py"
 
 [[artifacts]]
 source = "/solution/src/dedup.py"
