@@ -74,8 +74,8 @@ def main():
         text=report.read_text(encoding='utf-8').lower()
         for token in ('root cause','verification','what was wrong','what i changed'):
             if token not in text: artifact=0.0
-    # Constraint score is about not deleting legitimate rows except true normalized duplicates.
-    if functional==1.0 and len(expected)==2200 and len(cand_dedup)==2200: constraint=1.0
+    # Constraint: must not delete legitimate rows except true normalized duplicates.
+    if functional==1.0 and len(cand_dedup)==len(expected): constraint=1.0
     else: constraint=0.0
     overall=round((functional+constraint+robust+artifact)/4,3)
     reward={'overall':overall,'functional_correctness':functional,'constraint_satisfaction':constraint,'robustness':robust,'artifact_quality':artifact}

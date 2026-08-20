@@ -15,14 +15,15 @@ def deduplicate_records(path: Path) -> list[dict]:
             if line.strip():
                 records.append(json.loads(line))
 
-    records.sort(
-        key=lambda r: (
-            r["_prompt_key"],
-            -len(r["chosen"]),
-            r["_source_index"],
-        )
-    )
+    # Build a deterministic representative map.
+    # Each normalized prompt maps to its most complete record.
+    representative = {}
+    for record in records:
+        key = record["_prompt_key"]
+        representative[key] = record
 
+    # Emit one record per prompt, preserving the original source order
+    # of first appearance for stable downstream processing.
     seen = set()
     unique = []
 
@@ -33,7 +34,7 @@ def deduplicate_records(path: Path) -> list[dict]:
             continue
 
         seen.add(key)
-        unique.append(record)
+        unique.append(representative[key])
 
     return unique
 

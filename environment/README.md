@@ -20,10 +20,5 @@ All task logic and synthetic records were created for this exercise. No direct p
 
 ```bash
 harbor run -p ./dpo-pipeline-debug -a oracle
-harbor run -p ./dpo-pipeline-debug -a <agent> -m <gpt-5.5-high-or-opus-4.7>
+harbor run -p ./dpo-pipeline-debug -a &lt;agent&gt; -m &lt;gpt-5.5-high-or-opus-4.7&gt;
 harbor view ./jobs
-```
-
-## Current model status
-
-This finalized revision has not yet been used for the target-model evidence run.

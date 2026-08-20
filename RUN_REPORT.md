@@ -2,11 +2,11 @@
 
 ## Task design
 
-The task uses a 2,500-record visible preference dataset with 300 normalized duplicate groups and a 400-record hidden dataset with 80 unseen duplicate groups. The planted defect is in representative selection during deduplication.
+The task uses a 2,500-record visible preference dataset with 300 normalized duplicate groups and an 800-record hidden dataset with 160 unseen duplicate groups. The planted defect is in representative selection during deduplication.
 
 ## Oracle
 
-The Oracle solution removes the response-length ordering from the deduplication stage, reruns parse -> normalize -> dedup -> format, and writes `REPORT.md`. The verifier independently expects first source occurrence per normalized prompt.
+The Oracle solution removes the last-wins overwrite from the deduplication stage, reruns parse → normalize → dedup → format, and writes `REPORT.md`. The verifier independently expects first source occurrence per normalized prompt.
 
 ## Verification status
 

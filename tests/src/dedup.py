@@ -1,22 +1,42 @@
 #!/usr/bin/env python3
 import json
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
-IN=ROOT/'data/normalized_preferences.jsonl'
-OUT=ROOT/'data/deduped_preferences.jsonl'
-def deduplicate_records(path):
-    records=[]
-    with path.open(encoding='utf-8') as f:
-        for line in f:
-            if line.strip(): records.append(json.loads(line))
-    seen=set(); unique=[]
-    for r in records:
-        if r['_prompt_key'] in seen: continue
-        seen.add(r['_prompt_key']); unique.append(r)
+
+ROOT = Path(__file__).resolve().parents[1]
+IN_PATH = ROOT / "data" / "normalized_preferences.jsonl"
+OUT_PATH = ROOT / "data" / "deduped_preferences.jsonl"
+
+
+def deduplicate_records(path: Path) -> list[dict]:
+    seen = set()
+    unique = []
+
+    with path.open("r", encoding="utf-8") as infile:
+        for line in infile:
+            if not line.strip():
+                continue
+
+            record = json.loads(line)
+            key = record["_prompt_key"]
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            unique.append(record)
+
     return unique
+
+
 def main():
-    rows=deduplicate_records(IN)
-    with OUT.open('w',encoding='utf-8') as f:
-        for r in rows: f.write(json.dumps(r,ensure_ascii=False)+'\n')
-    print(f'Kept {len(rows)} unique preference records at {OUT}')
-if __name__=='__main__': main()
+    records = deduplicate_records(IN_PATH)
+
+    with OUT_PATH.open("w", encoding="utf-8") as outfile:
+        for record in records:
+            outfile.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    print(f"Kept {len(records)} unique preference records at {OUT_PATH}")
+
+
+if __name__ == "__main__":
+    main()
