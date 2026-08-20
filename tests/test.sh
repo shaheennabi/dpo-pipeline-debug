@@ -11,11 +11,11 @@ cp "$TEST_ROOT/data/normalized_preferences.jsonl" "$SOLUTION_ROOT/data/normalize
 python "$SOLUTION_ROOT/src/dedup.py"
 python "$SOLUTION_ROOT/src/format.py"
 
-# Run grader; capture exit code so we always produce a reward file
+# Run grader; always produce reward file even on crash
 RC=0
 python "$TEST_ROOT/grader.py" || RC=$?
 
-# Ensure reward file exists even if grader crashed
+# If grader somehow still didn't write reward, produce fallback
 if [ ! -f /logs/verifier/reward.json ]; then
     cat > /logs/verifier/reward.json <<'JSON'
 {
