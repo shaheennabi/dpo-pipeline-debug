@@ -17,7 +17,7 @@ provenance = "Synthetic task created from scratch for this exercise; no benchmar
 
 [agent]
 timeout_sec = 1800.0
-setup_timeout_sec = 900.0
+setup_timeout_sec = 1200.0
 
 [verifier]
 timeout_sec = 180.0
