@@ -1,7 +1,0 @@
-Parsed 100 preference records to /tests/data/parsed_preferences.jsonl
-Kept 100 unique preference records at /tests/data/deduped_preferences.jsonl
-Formatted 100 preference records to /tests/data/final_preferences.jsonl
-Traceback (most recent call last):
-  File "/tests/grader.py", line 22, in <module>
-    raise RuntimeError(
-RuntimeError: Hidden preference data not found. Set HIDDEN_PREFS_PATH environment variable or mount hidden data at /hidden/hidden_preferences.jsonl

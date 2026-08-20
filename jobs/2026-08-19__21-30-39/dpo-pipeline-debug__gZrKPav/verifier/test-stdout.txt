@@ -1,5 +1,0 @@
-Parsed 100 preference records to /tests/data/parsed_preferences.jsonl
-Kept 100 unique preference records at /tests/data/deduped_preferences.jsonl
-Formatted 100 preference records to /tests/data/final_preferences.jsonl
-Pipeline semantics preserved for deduplicated and hidden preference data.
-Wrote /logs/verifier/reward.json (success)
