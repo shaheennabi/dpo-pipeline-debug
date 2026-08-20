@@ -79,7 +79,9 @@ def main():
     else: constraint=0.0
     overall=round((functional+constraint+robust+artifact)/4,3)
     reward={'overall':overall,'functional_correctness':functional,'constraint_satisfaction':constraint,'robustness':robust,'artifact_quality':artifact}
-    Path('/tests/reward.json').write_text(json.dumps(reward,indent=2),encoding='utf-8')
+    # Write reward to Harbor's expected path
+    Path('/logs/verifier').mkdir(parents=True, exist_ok=True)
+    Path('/logs/verifier/reward.json').write_text(json.dumps(reward,indent=2),encoding='utf-8')
     print(json.dumps(reward,indent=2))
     if overall < 1.0: raise SystemExit(1)
 if __name__=='__main__': main()
