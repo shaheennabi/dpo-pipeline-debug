@@ -3,12 +3,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-IN_PATH = ROOT / "data" / "parsed_preferences.jsonl"
+IN_PATH = ROOT / "data" / "normalized_preferences.jsonl"
 OUT_PATH = ROOT / "data" / "deduped_preferences.jsonl"
-
-
-def normalize_prompt(prompt: str) -> str:
-    return " ".join(prompt.strip().split()).lower()
 
 
 def deduplicate_records(path: Path) -> list[dict]:
@@ -21,8 +17,9 @@ def deduplicate_records(path: Path) -> list[dict]:
 
     records.sort(
         key=lambda r: (
-            normalize_prompt(r["prompt"]),
+            r["_prompt_key"],
             -len(r["chosen"]),
+            r["_source_index"],
         )
     )
 
@@ -30,12 +27,12 @@ def deduplicate_records(path: Path) -> list[dict]:
     unique = []
 
     for record in records:
-        prompt_key = normalize_prompt(record["prompt"])
+        key = record["_prompt_key"]
 
-        if prompt_key in seen:
+        if key in seen:
             continue
 
-        seen.add(prompt_key)
+        seen.add(key)
         unique.append(record)
 
     return unique

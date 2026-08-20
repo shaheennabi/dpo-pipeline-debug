@@ -29,11 +29,18 @@ def main():
     with IN_PATH.open("r", encoding="utf-8") as infile:
         for line in infile:
             if line.strip():
-                rows.append(format_record(json.loads(line), MAX_RESPONSE_LENGTH))
+                rows.append(
+                    format_record(
+                        json.loads(line),
+                        MAX_RESPONSE_LENGTH,
+                    )
+                )
 
     with OUT_PATH.open("w", encoding="utf-8") as outfile:
         for row in rows:
-            outfile.write(json.dumps(row, ensure_ascii=False) + "\n")
+            outfile.write(
+                json.dumps(row, ensure_ascii=False) + "\n"
+            )
 
     print(f"Formatted {len(rows)} preference records to {OUT_PATH}")
 

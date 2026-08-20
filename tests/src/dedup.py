@@ -3,39 +3,49 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-IN_PATH = ROOT / "data" / "deduped_preferences.jsonl"
-OUT_PATH = ROOT / "data" / "final_preferences.jsonl"
-MAX_RESPONSE_LENGTH = 180
+IN_PATH = ROOT / "data" / "normalized_preferences.jsonl"
+OUT_PATH = ROOT / "data" / "deduped_preferences.jsonl"
 
 
-def truncate_response(text: str, max_length: int) -> str:
-    if len(text) <= max_length:
-        return text
-    return text[:max_length].rstrip() + "..."
+def deduplicate_records(path: Path) -> list[dict]:
+    records = []
 
+    with path.open("r", encoding="utf-8") as infile:
+        for line in infile:
+            if line.strip():
+                records.append(json.loads(line))
 
-def format_record(record: dict, max_length: int) -> dict:
-    return {
-        "id": record["id"],
-        "prompt": record["prompt"],
-        "chosen": truncate_response(record["chosen"], max_length),
-        "rejected": truncate_response(record["rejected"], max_length),
-    }
+    records.sort(
+        key=lambda r: (
+            r["_prompt_key"],
+            -len(r["chosen"]),
+            r["_source_index"],
+        )
+    )
+
+    seen = set()
+    unique = []
+
+    for record in records:
+        key = record["_prompt_key"]
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+        unique.append(record)
+
+    return unique
 
 
 def main():
-    rows = []
-
-    with IN_PATH.open("r", encoding="utf-8") as infile:
-        for line in infile:
-            if line.strip():
-                rows.append(format_record(json.loads(line), MAX_RESPONSE_LENGTH))
+    records = deduplicate_records(IN_PATH)
 
     with OUT_PATH.open("w", encoding="utf-8") as outfile:
-        for row in rows:
-            outfile.write(json.dumps(row, ensure_ascii=False) + "\n")
+        for record in records:
+            outfile.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-    print(f"Formatted {len(rows)} preference records to {OUT_PATH}")
+    print(f"Kept {len(records)} unique preference records at {OUT_PATH}")
 
 
 if __name__ == "__main__":
