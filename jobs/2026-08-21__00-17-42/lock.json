@@ -1,0 +1,69 @@
+{
+    "schema_version": 3,
+    "created_at": "2026-08-20T18:47:43.165920Z",
+    "harbor": {
+        "version": "0.21.0",
+        "is_editable": false
+    },
+    "n_concurrent_trials": 4,
+    "retry": {
+        "max_retries": 0,
+        "exclude_exceptions": [
+            "AgentAuthenticationError",
+            "RewardFileNotFoundError",
+            "ModelNotFoundError",
+            "AgentSafetyRefusalError",
+            "AgentTimeoutError",
+            "VerifierTimeoutError",
+            "ApiUsageLimitError",
+            "RewardFileEmptyError",
+            "VerifierOutputParseError"
+        ],
+        "wait_multiplier": 1.0,
+        "min_wait_sec": 1.0,
+        "max_wait_sec": 60.0
+    },
+    "trials": [
+        {
+            "schema_version": 2,
+            "task": {
+                "name": "dpo-pipeline-debug",
+                "type": "local",
+                "digest": "sha256:dfc77f4ca29eff4869c1e7cf446c26829340aefc0618940edc057b464d453e72",
+                "path": "."
+            },
+            "install_only": false,
+            "timeout_multiplier": 1.0,
+            "agent": {
+                "name": "codex",
+                "model_name": "openai/gpt-5.5-pro",
+                "skills": [],
+                "resume_trajectory": false,
+                "extra_allowed_hosts": [],
+                "kwargs": {
+                    "reasoning_effort": "high"
+                },
+                "env": {
+                    "OPENAI_API_KEY": "sk-o****ea4",
+                    "OPENAI_BASE_URL": "https://openrouter.ai/api/v1"
+                },
+                "mcp_servers": []
+            },
+            "skills": [],
+            "environment": {
+                "type": "docker",
+                "force_build": false,
+                "delete": true,
+                "cpu_enforcement_policy": "auto",
+                "memory_enforcement_policy": "auto",
+                "extra_docker_compose": [],
+                "kwargs": {},
+                "extra_allowed_hosts": []
+            },
+            "verifier": {
+                "disable": false,
+                "environment_mode": "separate"
+            }
+        }
+    ]
+}

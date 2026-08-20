@@ -1,0 +1,58 @@
+[
+  {
+    "source": "/logs/artifacts",
+    "destination": "artifacts/logs/artifacts",
+    "type": "directory",
+    "status": "empty",
+    "service": null
+  },
+  {
+    "source": "/solution/src/parse.py",
+    "destination": "artifacts/solution/src/parse.py",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  },
+  {
+    "source": "/solution/src/normalize.py",
+    "destination": "artifacts/solution/src/normalize.py",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  },
+  {
+    "source": "/solution/src/dedup.py",
+    "destination": "artifacts/solution/src/dedup.py",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  },
+  {
+    "source": "/solution/src/format.py",
+    "destination": "artifacts/solution/src/format.py",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  },
+  {
+    "source": "/solution/data/deduped_preferences.jsonl",
+    "destination": "artifacts/solution/data/deduped_preferences.jsonl",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  },
+  {
+    "source": "/solution/data/final_preferences.jsonl",
+    "destination": "artifacts/solution/data/final_preferences.jsonl",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  },
+  {
+    "source": "/solution/REPORT.md",
+    "destination": "artifacts/solution/REPORT.md",
+    "type": "file",
+    "status": "ok",
+    "service": null
+  }
+]

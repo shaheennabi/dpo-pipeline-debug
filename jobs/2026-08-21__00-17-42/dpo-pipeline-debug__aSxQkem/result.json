@@ -1,0 +1,125 @@
+{
+    "id": "c9ff08a3-4ef1-4fff-b4fc-3c2b55f52ee7",
+    "task_name": "dpo-pipeline-debug",
+    "trial_name": "dpo-pipeline-debug__aSxQkem",
+    "trial_uri": "file:///C:/Users/mailm/Documents/Long-Horizon-Agentic-Task/collinear-candidate/dpo-pipeline-debug/jobs/2026-08-21__00-17-42/dpo-pipeline-debug__aSxQkem",
+    "task_id": {
+        "path": "."
+    },
+    "source": null,
+    "task_checksum": "a84fe12c4fe290771a2ade42785df8003db714a1f6fdb2a1e9f28d4b21b6778c",
+    "config": {
+        "task": {
+            "path": ".",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "dpo-pipeline-debug__aSxQkem",
+        "trials_dir": "jobs\\2026-08-21__00-17-42",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "codex",
+            "import_path": null,
+            "model_name": "openai/gpt-5.5-pro",
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {
+                "reasoning_effort": "high"
+            },
+            "env": {
+                "OPENAI_API_KEY": "sk-o****ea4",
+                "OPENAI_BASE_URL": "https://openrouter.ai/api/v1"
+            },
+            "mcp_servers": []
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "job_id": "32a7ae8b-392e-4f50-801b-4dd914d09c80",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "codex",
+        "version": "0.148.0",
+        "model_info": {
+            "name": "gpt-5.5-pro",
+            "provider": "openai"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "overall": 0.5,
+            "functional_correctness": 0.0,
+            "constraint_satisfaction": 0.0,
+            "robustness": 1.0,
+            "artifact_quality": 1.0
+        }
+    },
+    "verifier_environment_mode": "separate",
+    "exception_info": null,
+    "started_at": "2026-08-20T18:47:43.849760Z",
+    "finished_at": "2026-08-20T19:03:05.739702Z",
+    "environment_setup": {
+        "started_at": "2026-08-20T18:47:44.944457Z",
+        "finished_at": "2026-08-20T18:47:53.724340Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-08-20T18:47:53.724340Z",
+        "finished_at": "2026-08-20T18:47:56.488284Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-08-20T18:47:56.488284Z",
+        "finished_at": "2026-08-20T19:02:24.978847Z"
+    },
+    "verifier": {
+        "started_at": "2026-08-20T19:02:36.988914Z",
+        "finished_at": "2026-08-20T19:03:05.739702Z"
+    },
+    "step_results": null
+}

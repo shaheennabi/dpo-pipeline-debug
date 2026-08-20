@@ -1,0 +1,19 @@
+Parsed 2500 preference records to /tests/data/parsed_preferences.jsonl
+Normalized 2500 preference records to /tests/data/normalized_preferences.jsonl
+Kept 2200 unique preference records at /solution/data/deduped_preferences.jsonl
+Formatted 2200 preference records to /solution/data/final_preferences.jsonl
+Traceback (most recent call last):
+  File "/tests/grader.py", line 50, in main
+    check_exact(cand_dedup,expected,'visible dedup')
+  File "/tests/grader.py", line 31, in check_exact
+    if a.get(field)!=e.get(field): raise AssertionError(f'{label}: mismatch at row {i}, field {field}, candidate id={a.get("id")}, expected id={e.get("id")}')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: visible dedup: mismatch at row 5, field id, candidate id=p0201-dup, expected id=p0201
+FUNCTIONAL FAILURE: visible dedup: mismatch at row 5, field id, candidate id=p0201-dup, expected id=p0201
+{
+  "overall": 0.5,
+  "functional_correctness": 0.0,
+  "constraint_satisfaction": 0.0,
+  "robustness": 1.0,
+  "artifact_quality": 1.0
+}
