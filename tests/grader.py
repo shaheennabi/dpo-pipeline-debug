@@ -74,7 +74,11 @@ def main():
             k=key(r['prompt'])
             if k in seen: continue
             seen.add(k); exp.append(r)
-        if [r['id'] for r in got] != [r['id'] for r in exp]: raise AssertionError('hidden dedup semantics mismatch')
+        if len(got) != len(exp): raise AssertionError(f'hidden dedup row count {len(got)} != {len(exp)}')
+        for g, e in zip(got, exp):
+            for field in ('id', 'prompt', 'chosen', 'rejected'):
+                if g.get(field) != e.get(field):
+                    raise AssertionError(f'hidden dedup content mismatch field={field} expected_id={e.get("id")} got_id={g.get("id")}')
         for r in exp:
             out=fmt_mod.format_record(r,MAX)
             if out != {'id':r['id'],'prompt':r['prompt'],'chosen':trunc(r['chosen']),'rejected':trunc(r['rejected'])}: raise AssertionError(f'hidden formatter mismatch for {r["id"]}')
