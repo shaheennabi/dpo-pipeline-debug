@@ -12,6 +12,7 @@ Requirements:
 - The fix must generalize to preference data that is not present in the supplied examples.
 - Preserve the existing pipeline structure unless a change is necessary to repair the underlying issue.
 - Deduplication must retain exactly one record per normalized prompt: the record from the **first** occurrence in source order. Do not select a "best" or "most complete" duplicate — retained content and identity (including `id`) must match the first-seen record exactly.
+- Prompt normalization for deduplication purposes must be case-insensitive, must collapse internal whitespace, and must ignore trailing punctuation (one or more of `. , ! ? ; :` at the end of the prompt, after whitespace is trimmed). Two prompts that differ only by trailing punctuation (e.g. `"Explain X"` vs `"Explain X?"`) must be treated as the same prompt and deduplicated accordingly.
 
 The dataset is intentionally large enough that inspection should be systematic rather than manual. Compare intermediate artifacts, use scripts to quantify patterns, form and test hypotheses, and verify the repaired pipeline end to end.
 

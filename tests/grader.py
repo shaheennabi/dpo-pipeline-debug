@@ -9,7 +9,12 @@ REWARD_PATH=Path('/logs/verifier/reward.json')
 def load(path):
     with path.open(encoding='utf-8') as f: return [json.loads(x) for x in f if x.strip()]
 
-def key(prompt): return ' '.join(prompt.strip().split()).lower()
+import re
+
+def key(prompt):
+    s = ' '.join(prompt.strip().split()).lower()
+    s = re.sub(r'[.,!?;:]+$', '', s).rstrip()
+    return s
 
 def expected_dedup(rows):
     seen=set(); out=[]
@@ -59,14 +64,17 @@ def main():
     if len(cand_dedup)==len(expected): constraint=1.0
     else: constraint=0.0
 
-    # Robustness: direct semantic checks on hidden data
+    # Robustness: direct semantic checks on hidden data, chaining the
+    # candidate's own normalize.py -> dedup.py so both repaired stages are
+    # actually exercised (not just re-derived from the grader's own key()).
     try:
+        norm_mod=import_mod(SOL/'src/normalize.py','candidate_normalize')
         dedup_mod=import_mod(SOL/'src/dedup.py','candidate_dedup')
         fmt_mod=import_mod(SOL/'src/format.py','candidate_format')
         tmp=Path('/tmp/_hidden_work.jsonl')
         parsed=[]
         for idx,r in enumerate(hidden,1):
-            rr=dict(r); rr['_source_index']=idx; rr['_prompt_key']=key(rr['prompt']); parsed.append(rr)
+            rr=dict(r); rr['_source_index']=idx; rr['_prompt_key']=norm_mod.normalize_prompt(rr['prompt']); parsed.append(rr)
         tmp.write_text('\n'.join(json.dumps(x) for x in parsed)+'\n',encoding='utf-8')
         got=dedup_mod.deduplicate_records(tmp)
         exp=[]; seen=set()
