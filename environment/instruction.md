@@ -11,6 +11,7 @@ Requirements:
 - Do not hard-code corrections for individual IDs or examples.
 - The fix must generalize to preference data that is not present in the supplied examples.
 - Preserve the existing pipeline structure unless a change is necessary to repair the underlying issue.
+- Deduplication must retain exactly one record per normalized prompt: the record from the **first** occurrence in source order. Do not select a "best" or "most complete" duplicate — retained content and identity (including `id`) must match the first-seen record exactly.
 
 The dataset is intentionally large enough that inspection should be systematic rather than manual. Compare intermediate artifacts, use scripts to quantify patterns, form and test hypotheses, and verify the repaired pipeline end to end.
 

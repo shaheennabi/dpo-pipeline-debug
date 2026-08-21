@@ -15,8 +15,7 @@ def deduplicate_records(path: Path) -> list[dict]:
             if line.strip():
                 records.append(json.loads(line))
 
-    # Build a deterministic representative map.
-    # Each normalized prompt maps to its most complete record.
+    # Build a deterministic representative map keyed by normalized prompt.
     representative = {}
     for record in records:
         key = record["_prompt_key"]
