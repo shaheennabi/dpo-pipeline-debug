@@ -95,7 +95,7 @@ def main():
     if not report.exists(): artifact=0.0
     else:
         text=report.read_text(encoding='utf-8').lower()
-        for token in ('root cause','verification','what was wrong','what i changed'):
+        for token in ('root cause','verification','what was wrong','what changed'):
             if token not in text: artifact=0.0
 
     overall = write_reward(functional, constraint, robust, artifact)
