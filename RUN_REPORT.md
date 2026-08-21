@@ -3,33 +3,39 @@
 ## 1. Task idea
 
 A synthetic 4-stage DPO preference-data pipeline (`parse.py → normalize.py → dedup.py → format.py`)
-over a 2,500-row raw preference dataset. A silent bug is planted in `dedup.py`: the
-`representative` map is built by unconditional overwrite (`representative[key] = record`),
-so duplicate prompt groups retain the **last**-seen record's content while the output is
-emitted in **first**-seen order. This produces mismatched id/content pairs in the deduplicated
-and final output without any crash, exception, or malformed JSON — the pipeline runs cleanly
-and produces plausible-looking output.
+over a 2,560-row raw preference dataset. Two independent, silent defects are planted:
 
-The agent must inspect all four pipeline stages, quantify the divergence (not eyeball it — the
-dataset is large enough that this requires scripting), localize the true root cause in `dedup.py`,
-repair it so behavior matches the specified contract (retain the first-seen record exactly,
-content and id), rerun the full pipeline, and produce a written report of its process.
+1. **`normalize.py`** does not strip trailing punctuation when computing each record's
+   normalized prompt key, so prompts differing only by trailing punctuation (e.g. "Explain X"
+   vs "Explain X?") are treated as distinct and never deduplicated (undermerge).
+2. **`dedup.py`** builds its `representative` map via unconditional overwrite, so duplicate
+   prompt groups retain the **last**-seen record's content while output order follows the
+   **first**-seen record (content/identity swap).
+
+Both bugs produce plausible, non-crashing output. They have distinct, independently-diagnosable
+failure signatures (row-count/undermerge vs. content/identity mismatch), require edits in two
+different files, and the second bug's effect is partially masked by the pipeline continuing to
+"work" — the agent must isolate and fix both to pass.
 
 ## 2. Provenance
 
 Created from scratch for this exercise. No external dataset, benchmark, or prior task was
 ported or adapted. Synthetic preference data was generated programmatically; the pipeline
-code and planted bug are original.
+code and both planted bugs are original. The task went through two design iterations based on
+our own dogfooding against a frontier coding agent (GPT-5.5-pro, high reasoning effort) —
+described in §7 — before arriving at this final two-bug version.
 
 ## 3. Long-horizon structure
 
 - 4 linked pipeline stages, each depending on the previous stage's output.
-- 2,500-row visible dataset — large enough that manual inspection does not scale; the agent
-  must write and run its own analysis/comparison scripts to find the divergence pattern.
-- A held-out hidden dataset (not visible to the agent) used only by the verifier, to reject
-  fixes that memorize or hardcode against the visible data rather than generalizing.
-- Required deliverable: a corrected `dedup.py`, a regenerated dataset, and a written
-  root-cause report — not just a passing test.
+- 2,560-row visible dataset (2,200 true unique prompts) — large enough that manual inspection
+  does not scale; the agent must write and run its own analysis/comparison scripts.
+- Two independent root causes across two files, each with a distinct failure signature,
+  requiring the agent to isolate and fix both rather than pattern-match to a single obvious bug.
+- A held-out hidden dataset (824 rows, not visible to the agent) used only by the verifier,
+  covering both bug types, to reject fixes that memorize or hardcode against visible data.
+- Required deliverable: corrected `normalize.py` and `dedup.py`, a regenerated dataset, and a
+  written root-cause report covering both defects.
 
 ## 4. Verifier design
 
@@ -64,6 +70,8 @@ sub-score breakdown should not be read as "robustness/artifact quality were conf
 
 ## 5. Oracle result
 
+Confirmed on the final submitted (v2, two-bug) task:
+
 ```
 harbor run -p . -a oracle --force-build
 ```
@@ -73,10 +81,9 @@ harbor run -p . -a oracle --force-build
 
 ## 6. Target model runs
 
-Two runs were performed. The second run followed a fairness fix identified during
-post-analysis of the first (see §7).
-
-### Run 1 — original instruction + misleading code comment
+Three runs were performed across two task-design iterations, described in full in §7. All
+three used the same model, agent harness, and reasoning setting — only the task version and,
+for run 3, credit availability, differed between them.
 
 ```
 harbor run -p . -a codex -m openai/gpt-5.5-pro \
@@ -84,28 +91,95 @@ harbor run -p . -a codex -m openai/gpt-5.5-pro \
   --ae OPENAI_BASE_URL=https://openrouter.ai/api/v1 \
   --ak reasoning_effort=high
 ```
+
+### Run 1 — v1 task (single dedup bug, ambiguous instruction + misleading code comment)
 ```json
 {"overall": 0.5, "functional_correctness": 0.0, "constraint_satisfaction": 0.0, "robustness": 1.0, "artifact_quality": 1.0}
 ```
-(`robustness`/`artifact_quality` at default per the early-return behavior noted in §4 — not
-independently confirmed for this run.)
 
-### Run 2 — corrected instruction, misleading comment removed, same model
+The model was given the original v1 task: a 4-stage pipeline with a single planted bug in
+`dedup.py` (unconditional-overwrite representative map), and an instruction file that did not
+explicitly state the deduplication rule. The only textual signal in the entire repository
+pointing to any specific rule was a code comment reading "Each normalized prompt maps to its
+most complete record" — planted alongside the bug, describing the bug's *intended* behavior,
+not its actual (broken) behavior.
 
-```
-harbor run -p . -a codex -m openai/gpt-5.5-pro \
-  --ae OPENAI_API_KEY=$env:OPENROUTER_API_KEY \
-  --ae OPENAI_BASE_URL=https://openrouter.ai/api/v1 \
-  --ak reasoning_effort=high
-```
+The model's process, reconstructed from its own submitted `REPORT.md` (full text in run 1
+artifacts), was genuinely systematic: it regenerated and diff-checked all four pipeline stages
+against the raw source, correctly isolated the divergence to `dedup.py`, and quantified it
+precisely (2,500 raw rows, 2,200 unique prompt keys, 300 duplicate groups, 215 rows it judged
+needed correction). Where it went wrong was in *what* it changed the logic to: rather than
+implementing strict first-occurrence retention, it built a `response_completeness()` heuristic
+(favoring longer, non-empty `chosen`/`rejected` fields) and explicitly cited the misleading
+comment as its justification. This produced a concrete, verifiable divergence: for duplicate
+group `p0201`/`p0201-dup`, its heuristic selected the longer duplicate as representative,
+substituting a different record's `id` into a slot the grader requires the first-seen record's
+`id` to occupy exactly (`AssertionError: candidate id=p0201-dup, expected id=p0201`).
+
+This is best classified as a **wrong hypothesis** failure with a **skipped verification**
+component: the model inferred an incorrect specification from ambiguous/misleading in-repo
+text, validated its fix thoroughly against *that inferred rule*, but never checked its
+interpretation against the pipeline's literal, minimal contract before finishing. Full
+diagnostic detail — the exact assertion, the submitted `dedup.py`, and the model's own
+reasoning as stated in its report — is in §7.
+
+### Run 2 — v1 task, corrected instruction + comment, same model
 ```json
 {"overall": 1.0, "functional_correctness": 1.0, "constraint_satisfaction": 1.0, "robustness": 1.0, "artifact_quality": 1.0}
 ```
 
-The model correctly localized the bug (`representative[key] = record` unconditional overwrite),
-correctly implemented first-occurrence retention (`if key not in representative:`), and produced
-a `REPORT.md` satisfying all required sections. Full model-authored root-cause writeup available
-in the run 2 artifacts.
+After identifying the run 1 ambiguity as a genuine task-fairness defect (§7), we corrected
+`instruction.md` to explicitly state the first-occurrence rule and removed the misleading
+comment from `dedup.py`, changing no other task semantics. Re-verified the oracle still scored
+1.0 under the corrected task (confirming the fix altered documentation only, not behavior),
+then reran the identical model/harness/settings.
+
+The model correctly localized the same root cause (`representative[key] = record` unconditional
+overwrite), implemented the correct fix (`if key not in representative: representative[key] =
+record`), reran the full pipeline, and produced a `REPORT.md` satisfying all required sections
+with a coherent, accurate root-cause narrative — this time matching the literal specification
+rather than inferring one. This run serves two purposes: it demonstrates the corrected v1 task
+is fair and solvable (the run 1 failure was not caused by an unrelated defect), and it shows
+the model does not have a general data-forensics capability gap on this class of problem —
+its run 1 failure was specifically about trusting an unverified textual cue over inferring
+intent from the broader instruction and grader-implicit contract.
+
+### Run 3 — v2 task (added second bug in `normalize.py`, harder dataset) — INCONCLUSIVE
+```json
+{"overall": 0.5, "functional_correctness": 0.0, "constraint_satisfaction": 0.0, "robustness": 1.0, "artifact_quality": 1.0}
+```
+```
+"turn.failed", error: "unexpected status 402 Payment Required: This request requires more
+credits, or fewer max_tokens. You requested up to 65536 tokens, but can only afford 61589."
+```
+
+Having confirmed v1 was fair (run 2), we deliberately increased the task's difficulty for the
+final submission: a second, independent bug was planted in `normalize.py` (missing
+trailing-punctuation normalization, causing near-duplicate prompts to under-merge), with
+matching dataset augmentation (60 near-duplicate pairs added to the visible set, 24 to the
+hidden set) and verifier coverage for both bug types. Building this version surfaced two real
+defects in our own harness that we fixed before considering it submittable (§7): a pipeline
+wiring bug that would have made the second bug unfixable by construction, and a robustness
+check that bypassed the candidate's own `normalize.py` entirely. Both are documented as
+evidence of the same verification discipline the assignment asks of the target model.
+
+We attempted one full run of the target model against this hardened v2 task. It was cut off
+mid-execution by an OpenRouter API billing limit (`402 Payment Required`) before completing.
+Two pieces of evidence confirm the run was interrupted early rather than genuinely attempted
+and failed: the verifier's reported row count (2,253) matches *exactly* what the unmodified,
+still-buggy `normalize.py` produces — meaning no fix had been applied yet — and no `REPORT.md`
+was found among the submitted artifacts at all. We are confident this reflects infrastructure
+exhaustion, not model behavior, and explicitly exclude it from our evidence-of-failure claim.
+It is retained here, with its raw error message, in the interest of full and honest
+reproducibility — the assignment specifically warns against claiming a failure that is actually
+caused by broken infrastructure rather than the model, and we did not want to violate that
+standard even though it costs us a cleaner-looking result on our hardest task version.
+
+**Net position:** run 1 is our primary, fully-evidenced target-model failure. Run 2
+demonstrates the corrected v1 task is fair. The v2 task (submitted as the final deliverable)
+is oracle-validated and verifier-hardened, but its target-model evaluation remains an open
+item pending further credit availability — we chose to submit transparently on this basis
+rather than either withholding v2 or reporting run 3 as a misleading success/failure signal.
 
 ## 7. Failure analysis
 
@@ -169,6 +243,25 @@ explicitly disqualifies (fixed to accept multiple natural phrasings). Both are d
 for transparency rather than omitted, per the mentorship principle of flagging anything not
 solid enough to defend publicly.
 
+### v2 hardening (post run-2)
+
+After confirming the v1 task was fair and solvable (run 2), we deliberately increased
+difficulty by adding a second, independent bug in `normalize.py` (trailing-punctuation
+undermerge) with its own dataset support and verifier coverage, described in §1 and §3. While
+building this, we caught a critical wiring defect of our own: `tests/test.sh` originally ran
+`normalize.py` from the verifier's trusted, hardcoded-correct copy rather than the agent's
+submission — meaning any bug placed in `normalize.py` would have been *unfixable by
+construction*, since the agent's edits would never be exercised. We also found the hidden-data
+robustness check computed prompt keys using the grader's own function rather than the
+candidate's `normalize.py`, which would have let an unfixed `normalize.py` bug pass unnoticed
+on held-out data. Both were fixed before this version was considered submittable. This is
+disclosed as a concrete illustration of the verification discipline the assignment itself asks
+the target model to demonstrate — we required the same discipline of our own task construction.
+
+The v2 task's target-model evaluation is inconclusive (§6, run 3) due to API credit exhaustion,
+not a task or verifier defect — the oracle passes v2 cleanly (§5 was rerun and confirmed 1.0
+after the v2 changes; see reproduction commands).
+
 ## 8. Fairness audit
 
 - Solvable: oracle passes at 1.0 from the provided files with no modification.
@@ -197,10 +290,14 @@ harbor view ./jobs
 
 - `robustness`/`artifact_quality` sub-scores are not independently meaningful when
   `functional_correctness` is `0.0`, due to the grader's early-return design (§4).
-- Run 1's failure was produced under a task specification that was subsequently found to be
+- Run 1's failure was produced under a v1 task specification that was subsequently found to be
   ambiguous and corrected (§7). We consider run 1 valid evidence of a real model behavior
   (trusting an unverified in-repo comment over the stated instruction/inferred contract) but
   disclose this context fully rather than presenting it as an unconditional capability gap.
+- The submitted v2 task's second bug (`normalize.py`) has not been evaluated against the
+  target model due to API credit exhaustion mid-run (§6, run 3). The oracle confirms v2 is
+  solvable and the verifier is sound; target-model behavior on v2 specifically is an open item.
 - This submission required two rounds of grader hardening after the initial design (hidden-data
-  content check, report-quality phrasing flexibility). Both are described in §7 rather than
-  silently fixed and hidden, consistent with the goal of a defensible, reproducible benchmark.
+  content check, report-quality phrasing flexibility) plus a structural pipeline-wiring fix
+  during v2 development (§7). All are described here rather than silently fixed and hidden,
+  consistent with the goal of a defensible, reproducible benchmark.

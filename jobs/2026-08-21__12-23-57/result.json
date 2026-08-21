@@ -1,0 +1,67 @@
+{
+    "id": "c2e9ebae-d0b3-4336-8af8-6f15056c8bfe",
+    "started_at": "2026-08-21T12:23:58.383948",
+    "updated_at": "2026-08-21T12:28:42.294707",
+    "finished_at": "2026-08-21T12:28:42.294707",
+    "n_total_trials": 1,
+    "stats": {
+        "n_completed_trials": 1,
+        "n_errored_trials": 1,
+        "n_running_trials": 0,
+        "n_pending_trials": 0,
+        "n_cancelled_trials": 0,
+        "n_retries": 0,
+        "evals": {
+            "codex__gpt-5.5-pro__adhoc": {
+                "n_trials": 1,
+                "n_errors": 1,
+                "metrics": [
+                    {
+                        "artifact_quality": 1.0,
+                        "constraint_satisfaction": 0.0,
+                        "functional_correctness": 0.0,
+                        "overall": 0.5,
+                        "robustness": 1.0
+                    }
+                ],
+                "pass_at_k": {},
+                "reward_stats": {
+                    "overall": {
+                        "0.5": [
+                            "dpo-pipeline-debug__VxcNowj"
+                        ]
+                    },
+                    "functional_correctness": {
+                        "0.0": [
+                            "dpo-pipeline-debug__VxcNowj"
+                        ]
+                    },
+                    "constraint_satisfaction": {
+                        "0.0": [
+                            "dpo-pipeline-debug__VxcNowj"
+                        ]
+                    },
+                    "robustness": {
+                        "1.0": [
+                            "dpo-pipeline-debug__VxcNowj"
+                        ]
+                    },
+                    "artifact_quality": {
+                        "1.0": [
+                            "dpo-pipeline-debug__VxcNowj"
+                        ]
+                    }
+                },
+                "exception_stats": {
+                    "NonZeroAgentExitCodeError": [
+                        "dpo-pipeline-debug__VxcNowj"
+                    ]
+                }
+            }
+        },
+        "n_input_tokens": 40127,
+        "n_cache_tokens": 0,
+        "n_output_tokens": 1373,
+        "cost_usd": 1.45095
+    }
+}

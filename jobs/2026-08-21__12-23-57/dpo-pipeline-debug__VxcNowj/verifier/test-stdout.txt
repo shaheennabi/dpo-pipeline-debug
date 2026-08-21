@@ -1,0 +1,19 @@
+Parsed 2560 preference records to /tests/data/parsed_preferences.jsonl
+Normalized 2560 preference records to /solution/data/normalized_preferences.jsonl
+Kept 2253 unique preference records at /solution/data/deduped_preferences.jsonl
+Formatted 2253 preference records to /solution/data/final_preferences.jsonl
+Traceback (most recent call last):
+  File "/tests/grader.py", line 55, in main
+    check_exact(cand_dedup,expected,'visible dedup')
+  File "/tests/grader.py", line 33, in check_exact
+    if len(candidate)!=len(expected): raise AssertionError(f'{label}: row count {len(candidate)} != {len(expected)}')
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: visible dedup: row count 2253 != 2200
+FUNCTIONAL FAILURE: visible dedup: row count 2253 != 2200
+{
+  "overall": 0.5,
+  "functional_correctness": 0.0,
+  "constraint_satisfaction": 0.0,
+  "robustness": 1.0,
+  "artifact_quality": 1.0
+}
